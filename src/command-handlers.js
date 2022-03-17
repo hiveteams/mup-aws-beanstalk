@@ -66,10 +66,6 @@ import {
 } from './eb-config';
 
 import {
-  createEnvFile,
-} from './env-settings';
-
-import {
   waitForEnvReady,
   waitForHealth
 } from './env-ready';
