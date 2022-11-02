@@ -133,6 +133,28 @@ export function injectFiles(api, name, version, appConfig) {
       copy(sourcePath, destPath);
     });
   }
+
+  customConfigPath = api.resolvePath(api.getBasePath(), `${appPath}/.platform`);
+  customConfig = fs.existsSync(customConfigPath);
+  if (customConfig) {
+    console.log('  Copying files from project .platform folder');
+    copyFolderSync(customConfigPath, api.resolvePath(bundlePath, 'bundle/.platform'));
+  }
+ 
+  // Deleting this file, resolves issue with symlinks following during deployment process (file is ENNOENT)
+  const npmDir = api.resolvePath(bundlePath, `bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc`);
+  console.log('  Deleting redundant file');
+  fs.unlink(npmDir, function(err) {
+    if(err && err.code == 'ENOENT') {
+        // file doens't exist
+        console.info("File doesn't exist, won't remove it.");
+    } else if (err) {
+        // other errors, e.g. maybe we don't have enough permission
+        console.error("Error occurred while trying to remove file");
+    } else {
+        console.info(`File is removed`);
+    }
+  });
 }
 
 export function archiveApp(buildLocation, api) {
