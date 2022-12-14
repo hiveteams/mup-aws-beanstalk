@@ -123,8 +123,8 @@ export function injectFiles(api, name, version, appConfig) {
   destPath = api.resolvePath(bundlePath, 'bundle/health-check.js');
   copy(sourcePath, destPath);
 
-  const customConfigPath = api.resolvePath(api.getBasePath(), `${path}/.ebextensions`);
-  const customConfig = fs.existsSync(customConfigPath);
+  let customConfigPath = api.resolvePath(api.getBasePath(), `${path}/.ebextensions`);
+  let customConfig = fs.existsSync(customConfigPath);
   if (customConfig) {
     console.log('  Copying files from project .ebextensions folder');
     fs.readdirSync(customConfigPath).forEach((file) => {
@@ -134,7 +134,7 @@ export function injectFiles(api, name, version, appConfig) {
     });
   }
 
-  customConfigPath = api.resolvePath(api.getBasePath(), `${appPath}/.platform`);
+  customConfigPath = api.resolvePath(api.getBasePath(), `${path}/.platform`);
   customConfig = fs.existsSync(customConfigPath);
   if (customConfig) {
     console.log('  Copying files from project .platform folder');
@@ -142,19 +142,18 @@ export function injectFiles(api, name, version, appConfig) {
   }
  
   // Deleting this file, resolves issue with symlinks following during deployment process (file is ENNOENT)
-  const npmDir = api.resolvePath(bundlePath, `bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc`);
+  const symLink = api.resolvePath(bundlePath, `bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc`);
   console.log('  Deleting redundant file');
-  fs.unlink(npmDir, function(err) {
-    if(err && err.code == 'ENOENT') {
-        // file doens't exist
-        console.info("File doesn't exist, won't remove it.");
-    } else if (err) {
-        // other errors, e.g. maybe we don't have enough permission
-        console.error("Error occurred while trying to remove file");
-    } else {
-        console.info(`File is removed`);
-    }
-  });
+  
+  const symLinkExists = fs.existsSync(symLink);
+
+  if (!symLinkExists) {
+    fs.unlinkSync(symLink);
+    console.info('  File is removed');
+  } else {
+    console.info('  File doesn\'t exist, won\'t remove it.');
+  }
+
 }
 
 export function archiveApp(buildLocation, api) {
