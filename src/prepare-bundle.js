@@ -2,7 +2,30 @@ import archiver from 'archiver';
 import fs from 'fs';
 import ejs from 'ejs';
 import { round } from 'lodash';
+import path from 'path';
 import { getNodeVersion, logStep, names } from './utils';
+
+function copyFolderSync(src, dest) {
+  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+
+  fs.readdirSync(src).forEach((dirent) => {
+    const [srcPath, destPath] = [src, dest].map(dirPath => path.join(dirPath, dirent));
+    const stat = fs.lstatSync(srcPath);
+
+    switch (true) {
+      case stat.isFile():
+        console.log(` ... copying  ${srcPath} ${destPath}`);
+        fs.copyFileSync(srcPath, destPath);
+        break;
+      case stat.isDirectory():
+        copyFolderSync(srcPath, destPath);
+        break;
+      default:
+        break;
+    }
+  });
+}
 
 function copy(source, destination, vars = {}) {
   let contents = fs.readFileSync(source).toString();
@@ -30,8 +53,7 @@ export function injectFiles(api, name, version, appConfig) {
     forceSSL,
     gracefulShutdown,
     buildOptions,
-    longEnvVars,
-    path
+    path: appPath
   } = appConfig;
   const bundlePath = buildOptions.buildLocation;
   const {
@@ -59,7 +81,8 @@ export function injectFiles(api, name, version, appConfig) {
     '.platform/hooks',
     '.platform/hooks/prebuild',
     '.platform/nginx',
-    '.platform/nginx/conf.d'
+    '.platform/nginx/conf.d',
+    '.platform/nginx/conf.d/elasticbeanstalk'
   ].forEach((folder) => {
     try {
       fs.mkdirSync(api.resolvePath(bundlePath, 'bundle', folder));
@@ -87,8 +110,8 @@ export function injectFiles(api, name, version, appConfig) {
   destPath = api.resolvePath(bundlePath, 'bundle/.ebextensions/nginx.config');
   copy(sourcePath, destPath, { forceSSL });
 
-  sourcePath = api.resolvePath(__dirname, './assets/nginx.conf');
-  destPath = api.resolvePath(bundlePath, 'bundle/.platform/nginx/conf.d/nginx.conf');
+  sourcePath = api.resolvePath(__dirname, './assets/nginx-server.conf');
+  destPath = api.resolvePath(bundlePath, 'bundle/.platform/nginx/conf.d/elasticbeanstalk/00_application.conf');
   copy(sourcePath, destPath, { forceSSL });
 
   if (yumPackages) {
@@ -123,7 +146,7 @@ export function injectFiles(api, name, version, appConfig) {
   destPath = api.resolvePath(bundlePath, 'bundle/health-check.js');
   copy(sourcePath, destPath);
 
-  let customConfigPath = api.resolvePath(api.getBasePath(), `${path}/.ebextensions`);
+  let customConfigPath = api.resolvePath(api.getBasePath(), `${appPath}/.ebextensions`);
   let customConfig = fs.existsSync(customConfigPath);
   if (customConfig) {
     console.log('  Copying files from project .ebextensions folder');
@@ -134,7 +157,7 @@ export function injectFiles(api, name, version, appConfig) {
     });
   }
 
-  customConfigPath = api.resolvePath(api.getBasePath(), `${path}/.platform`);
+  customConfigPath = api.resolvePath(api.getBasePath(), `${appPath}/.platform`);
   customConfig = fs.existsSync(customConfigPath);
   if (customConfig) {
     console.log('  Copying files from project .platform folder');
