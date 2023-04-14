@@ -1,6 +1,6 @@
 {
   "name": "mup-aws-beanstalk",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Deploy apps to AWS Elastic Beanstalk using Meteor Up",
   "main": "index.js",
   "scripts": {
@@ -33,17 +33,17 @@
     "eslint-plugin-react": "^7.26.0",
     "gfm-code-blocks": "^1.0.0",
     "mocha": "^8.0.1",
-    "mup": "^1.5.4",
+    "mup": "^1.5.8",
     "shelljs": "^0.8.4"
   },
   "dependencies": {
     "@hapi/joi": "^15.1.1",
     "archiver": "^4.0.2",
     "aws-sdk": "^2.991.0",
-    "axios": "^0.21.4",
+    "axios": "^0.22.0",
     "babel-polyfill": "^6.26.0",
     "chalk": "^2.3.0",
-    "ejs": "^2.5.7",
+    "ejs": "^3.1.8",
     "lodash": "^4.17.21",
     "random-seed": "^0.3.0",
     "shell-escape": "^0.2.0",

@@ -2,7 +2,30 @@ import archiver from 'archiver';
 import fs from 'fs';
 import ejs from 'ejs';
 import { round } from 'lodash';
+import path from 'path';
 import { getNodeVersion, logStep, names } from './utils';
+
+function copyFolderSync(src, dest) {
+  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+
+  fs.readdirSync(src).forEach((dirent) => {
+    const [srcPath, destPath] = [src, dest].map(dirPath => path.join(dirPath, dirent));
+    const stat = fs.lstatSync(srcPath);
+
+    switch (true) {
+      case stat.isFile():
+        console.log(` ... copying  ${srcPath} ${destPath}`);
+        fs.copyFileSync(srcPath, destPath);
+        break;
+      case stat.isDirectory():
+        copyFolderSync(srcPath, destPath);
+        break;
+      default:
+        break;
+    }
+  });
+}
 
 function copy(source, destination, vars = {}) {
   let contents = fs.readFileSync(source).toString();
@@ -30,8 +53,7 @@ export function injectFiles(api, name, version, appConfig) {
     forceSSL,
     gracefulShutdown,
     buildOptions,
-    longEnvVars,
-    path
+    path: appPath
   } = appConfig;
   const bundlePath = buildOptions.buildLocation;
   const {
@@ -59,7 +81,8 @@ export function injectFiles(api, name, version, appConfig) {
     '.platform/hooks',
     '.platform/hooks/prebuild',
     '.platform/nginx',
-    '.platform/nginx/conf.d'
+    '.platform/nginx/conf.d',
+    '.platform/nginx/conf.d/elasticbeanstalk'
   ].forEach((folder) => {
     try {
       fs.mkdirSync(api.resolvePath(bundlePath, 'bundle', folder));
@@ -87,8 +110,8 @@ export function injectFiles(api, name, version, appConfig) {
   destPath = api.resolvePath(bundlePath, 'bundle/.ebextensions/nginx.config');
   copy(sourcePath, destPath, { forceSSL });
 
-  sourcePath = api.resolvePath(__dirname, './assets/nginx.conf');
-  destPath = api.resolvePath(bundlePath, 'bundle/.platform/nginx/conf.d/nginx.conf');
+  sourcePath = api.resolvePath(__dirname, './assets/nginx-server.conf');
+  destPath = api.resolvePath(bundlePath, 'bundle/.platform/nginx/conf.d/elasticbeanstalk/00_application.conf');
   copy(sourcePath, destPath, { forceSSL });
 
   if (yumPackages) {
@@ -123,8 +146,8 @@ export function injectFiles(api, name, version, appConfig) {
   destPath = api.resolvePath(bundlePath, 'bundle/health-check.js');
   copy(sourcePath, destPath);
 
-  const customConfigPath = api.resolvePath(api.getBasePath(), `${path}/.ebextensions`);
-  const customConfig = fs.existsSync(customConfigPath);
+  let customConfigPath = api.resolvePath(api.getBasePath(), `${appPath}/.ebextensions`);
+  let customConfig = fs.existsSync(customConfigPath);
   if (customConfig) {
     console.log('  Copying files from project .ebextensions folder');
     fs.readdirSync(customConfigPath).forEach((file) => {
@@ -133,6 +156,27 @@ export function injectFiles(api, name, version, appConfig) {
       copy(sourcePath, destPath);
     });
   }
+
+  customConfigPath = api.resolvePath(api.getBasePath(), `${appPath}/.platform`);
+  customConfig = fs.existsSync(customConfigPath);
+  if (customConfig) {
+    console.log('  Copying files from project .platform folder');
+    copyFolderSync(customConfigPath, api.resolvePath(bundlePath, 'bundle/.platform'));
+  }
+ 
+  // Deleting this file, resolves issue with symlinks following during deployment process (file is ENNOENT)
+  const symLink = api.resolvePath(bundlePath, `bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc`);
+  console.log('  Deleting redundant file');
+  
+  const symLinkExists = fs.existsSync(symLink);
+
+  if (!symLinkExists) {
+    fs.unlinkSync(symLink);
+    console.info('  File is removed');
+  } else {
+    console.info('  File doesn\'t exist, won\'t remove it.');
+  }
+
 }
 
 export function archiveApp(buildLocation, api) {
