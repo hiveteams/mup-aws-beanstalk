@@ -110,6 +110,10 @@ export function injectFiles(api, name, version, appConfig) {
   destPath = api.resolvePath(bundlePath, 'bundle/.ebextensions/nginx.config');
   copy(sourcePath, destPath, { forceSSL });
 
+  sourcePath = api.resolvePath(__dirname, './assets/nginx-http.conf');
+  destPath = api.resolvePath(bundlePath, 'bundle/.platform/nginx/conf.d/nginx-http.conf');
+  copy(sourcePath, destPath, { forceSSL });
+
   sourcePath = api.resolvePath(__dirname, './assets/nginx-server.conf');
   destPath = api.resolvePath(bundlePath, 'bundle/.platform/nginx/conf.d/elasticbeanstalk/00_application.conf');
   copy(sourcePath, destPath, { forceSSL });
@@ -163,11 +167,11 @@ export function injectFiles(api, name, version, appConfig) {
     console.log('  Copying files from project .platform folder');
     copyFolderSync(customConfigPath, api.resolvePath(bundlePath, 'bundle/.platform'));
   }
- 
+
   // Deleting this file, resolves issue with symlinks following during deployment process (file is ENNOENT)
-  const symLink = api.resolvePath(bundlePath, `bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc`);
+  const symLink = api.resolvePath(bundlePath, 'bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc');
   console.log('  Deleting redundant file');
-  
+
   const symLinkExists = fs.existsSync(symLink);
 
   if (!symLinkExists) {
@@ -176,7 +180,6 @@ export function injectFiles(api, name, version, appConfig) {
   } else {
     console.info('  File doesn\'t exist, won\'t remove it.');
   }
-
 }
 
 export function archiveApp(buildLocation, api) {
