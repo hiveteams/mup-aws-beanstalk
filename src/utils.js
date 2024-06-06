@@ -156,6 +156,13 @@ export function getNodeVersion(api, bundlePath) {
     };
   }
 
+  if (nodeVersion.startsWith('14')) {
+    return {
+      nodeVersion: '14.21.3',
+      npmVersion: '6.14.17'
+    };
+  }
+
   return {
     nodeVersion,
     npmVersion: '3.10.5'
