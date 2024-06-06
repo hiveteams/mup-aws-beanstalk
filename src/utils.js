@@ -140,6 +140,13 @@ export function getNodeVersion(api, bundlePath) {
 
   star = JSON.parse(star);
 
+  if (star.nodeVersion && star.nodeVersion.startsWith('14')) {
+    return {
+      nodeVersion: '14.21.3',
+      npmVersion: '6.14.17'
+    };
+  }
+
   if (star.npmVersion) {
     return {
       nodeVersion: star.nodeVersion,
@@ -148,7 +155,7 @@ export function getNodeVersion(api, bundlePath) {
   }
 
   const nodeVersion = nodeVersionTxt.substr(1);
-
+  
   if (nodeVersion.startsWith('4')) {
     return {
       nodeVersion,
@@ -156,12 +163,6 @@ export function getNodeVersion(api, bundlePath) {
     };
   }
 
-  if (nodeVersion.startsWith('14')) {
-    return {
-      nodeVersion: '14.21.3',
-      npmVersion: '6.14.17'
-    };
-  }
 
   return {
     nodeVersion,
