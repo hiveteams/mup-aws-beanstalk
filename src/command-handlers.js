@@ -154,11 +154,13 @@ export async function setup(api) {
     const trailBucketName = existingBucket ?
       existingBucket.Name :
       createUniqueName(trailBucketPrefix);
+    console.log('trailBucketName', trailBucketName);
     const region = appConfig.region || 'us-east-1';
     const accountId = await getAccountId();
     const policy = trailBucketPolicy(accountId, trailBucketName);
 
     const trailBucketCreated = await ensureBucketExists(Buckets, trailBucketName, appConfig.region);
+    console.log('trailBucketCreated', trailBucketCreated);
     await ensureBucketPolicyAttached(trailBucketName, policy);
 
     if (trailBucketCreated) {
@@ -193,14 +195,15 @@ export async function setup(api) {
     if (createdDocument) {
       console.log('  Created SSM Automation Document');
     }
-
+    console.log('before rule');
     const createdRule = await ensureCloudWatchRule(deregisterRuleName, 'Used by Meteor Up for graceful shutdown', DeregisterEvent);
-
+    
     if (createdRule) {
       console.log('  Created Cloud Watch rule');
     }
 
     const target = deregisterEventTarget(environmentName, eventTargetRoleName, accountId, region);
+    console.log('target', target);
     const createdTarget = await ensureRuleTargetExists(deregisterRuleName, target, accountId);
 
     if (createdTarget) {
