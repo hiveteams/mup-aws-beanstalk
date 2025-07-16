@@ -47,7 +47,7 @@ export function names(config) {
     serviceRole: 'aws-elasticbeanstalk-service-role',
     trailBucketPrefix: 'mup-graceful-shutdown-trail',
     trailName: 'mup-graceful-shutdown-trail',
-    deregisterRuleName: 'mup-target-deregister',
+    deregisterRuleName: config.app.deregisterRuleName || 'mup-target-deregister',
     eventTargetRole: `mup-envoke-run-command-${name}`,
     eventTargetPolicyName: 'Invoke_Run_Command',
     eventTargetPassRoleName: 'Pass_Role',
