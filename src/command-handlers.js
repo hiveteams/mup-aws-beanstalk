@@ -295,7 +295,9 @@ export async function deploy(api) {
 
   await api.runCommand('beanstalk.clean');
 
-  await api.runCommand('beanstalk.ssl');
+  // TODO better fix if we want, mup config to ignoreSSL or something
+  // but need the quick fix for now and so commenting out...we never want this in our envs
+  // await api.runCommand('beanstalk.ssl');
 
   // Check if deploy succeeded
   const {

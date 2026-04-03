@@ -163,20 +163,6 @@ export function injectFiles(api, name, version, appConfig) {
     console.log('  Copying files from project .platform folder');
     copyFolderSync(customConfigPath, api.resolvePath(bundlePath, 'bundle/.platform'));
   }
- 
-  // Deleting this file, resolves issue with symlinks following during deployment process (file is ENNOENT)
-  const symLink = api.resolvePath(bundlePath, `bundle/programs/server/npm/node_modules/meteor/peerlibrary_fiber-utils/node_modules/.bin/detect-libc`);
-  console.log('  Deleting redundant file');
-  
-  const symLinkExists = fs.existsSync(symLink);
-
-  if (!symLinkExists) {
-    fs.unlinkSync(symLink);
-    console.info('  File is removed');
-  } else {
-    console.info('  File doesn\'t exist, won\'t remove it.');
-  }
-
 }
 
 export function archiveApp(buildLocation, api) {
